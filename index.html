@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LRU Cache Visualizer</title>
+
+<style>
+    body{
+    margin:0;
+    font-family: "Segoe UI", sans-serif;
+    background:linear-gradient(135deg,#e0f2fe,#f8fafc);
+    color:#0f172a;
+}
+
+h1{
+    text-align:center;
+    padding:15px;
+}
+
+.wrapper{
+    max-width:1200px;
+    margin:auto;
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:20px;
+}
+
+/* ---------- LINKED LIST ---------- */
+
+.list-box{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+.list-title{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:10px;
+    font-weight:bold;
+}
+
+.list{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    overflow-x:auto;
+    padding-bottom:10px;
+}
+
+/* ===== UNIQUE HEX-PILL NODE STYLE ===== */
+
+.node{
+    width:90px;
+    height:80px;
+    background:#e5e7eb;
+    clip-path: polygon(
+      25% 0%,
+      75% 0%,
+      100% 50%,
+      75% 100%,
+      25% 100%,
+      0% 50%
+    );
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    transition:.4s;
+    box-shadow:0 8px 15px rgba(0,0,0,.15);
+}
+
+.node:hover{
+    transform:scale(1.08);
+}
+
+
+.node.mru{
+    background:linear-gradient(135deg,#4ade80,#22c55e);
+    color:black;
+}
+
+.node.lru{
+    background:linear-gradient(135deg,#fb7185,#ef4444);
+    color:white;
+}
+
+
+.arrow{
+    font-size:26px;
+    color:#64748b;
+}
+
+/* ---------- CONTROL PANEL ---------- */
+
+.panel{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+input,select,button{
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    border-radius:6px;
+    border:1px solid #cbd5f5;
+}
+
+button{
+    background:#2563eb;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{ background:#1d4ed8; }
+
+/* ---------- MAP ---------- */
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+}
+
+th,td{
+    border-bottom:1px solid #e5e7eb;
+    padding:8px;
+}
+
+/* ---------- LOG ---------- */
+
+.log{
+    margin-top:15px;
+    background:#f1f5f9;
+    padding:10px;
+    border-radius:6px;
+    height:120px;
+    overflow:auto;
+    font-size:13px;
+}
+.hit{color:#16a34a;}
+.miss{color:#dc2626;}
+
+/* ---------- ALGORITHM PANEL ---------- */
+
+.algorithm{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+.step{
+    padding:8px;
+    border-left:4px solid transparent;
+    margin-bottom:6px;
+}
+
+.step.active{
+    background:#e0f2fe;
+    border-left:4px solid #2563eb;
+}
+
+/* ===== THEME SUPPORT ===== */
+body.dark{
+    background:linear-gradient(135deg,#020617,#0f172a);
+    color:#e5e7eb;
+}
+
+body.dark .list-box,
+body.dark .panel,
+body.dark .algorithm{
+    background:#020617;
+    color:#e5e7eb;
+}
+
+body.dark .node{
+    background:#1e293b;
+    color:white;
+}
+
+body.dark .log{ background:black; }
+
+/* ===== ANIMATIONS ===== */
+
+.node{
+    transition: transform .4s ease, background .4s ease;
+}
+
+/* ===== DRAGGING ===== */
+
+.node{
+    cursor:grab;
+}
+
+.node.dragging{
+    opacity:0.5;
+}
+
+/* ===== FLOATING THEME BUTTON ===== */
+
+#themeBtn{
+    position:fixed;
+    top:20px;
+    right:20px;
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    background:#2563eb;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:22px;
+    cursor:pointer;
+    box-shadow:0 0 12px rgba(0,0,0,.3);
+    transition:.3s;
+    z-index:999;
+}
+
+#themeBtn:hover{
+    transform:scale(1.1);
+}
+
+body.dark #themeBtn{
+    background:#fbbf24;
+    color:black;
+}
+
+/* ===========================
+   PREMIUM DARK MODE THEME
+=========================== */
+
+body.dark{
+  background:
+    radial-gradient(circle at top, #0f172a 0%, #020617 55%),
+    linear-gradient(135deg,#020617,#020617);
+  color:#e5e7eb;
+}
+
+/* PANELS */
+
+body.dark .list-box,
+body.dark .panel,
+body.dark .algorithm{
+  background:rgba(2,6,23,0.75);
+  backdrop-filter: blur(12px);
+  border-radius:16px;
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.12),
+    0 15px 40px rgba(0,0,0,0.7);
+}
+
+/* HEADERS */
+
+body.dark h1{
+  letter-spacing:1px;
+  text-shadow:0 0 15px rgba(56,189,248,0.35);
+}
+
+/* INPUTS */
+
+body.dark input,
+body.dark select{
+  background:#020617;
+  color:#e5e7eb;
+  border:1px solid #1e293b;
+}
+
+body.dark input:focus,
+body.dark select:focus{
+  outline:none;
+  border-color:#38bdf8;
+  box-shadow:0 0 0 2px rgba(56,189,248,0.25);
+}
+
+/* BUTTON */
+
+body.dark button{
+  background:linear-gradient(135deg,#38bdf8,#2563eb);
+  color:#020617;
+}
+
+body.dark button:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 20px rgba(56,189,248,0.4);
+}
+
+/* NODES */
+
+body.dark .node{
+  background:linear-gradient(135deg,#1e293b,#020617);
+  color:#e5e7eb;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.05),
+    0 10px 25px rgba(0,0,0,0.8);
+}
+
+body.dark .node.mru{
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  color:#022c22;
+  box-shadow:0 0 20px rgba(34,197,94,0.6);
+}
+
+body.dark .node.lru{
+  background:linear-gradient(135deg,#ef4444,#b91c1c);
+  color:white;
+  box-shadow:0 0 20px rgba(239,68,68,0.6);
+}
+
+/* ARROWS */
+
+body.dark .arrow{
+  color:#38bdf8;
+  text-shadow:0 0 8px rgba(56,189,248,0.8);
+}
+
+/* MAP TABLE */
+
+body.dark table{
+  color:#e5e7eb;
+}
+
+body.dark th{
+  color:#38bdf8;
+  border-bottom:1px solid #1e293b;
+}
+
+body.dark td{
+  border-bottom:1px solid #020617;
+}
+
+/* LOG */
+
+body.dark .log{
+  background:#020617;
+  border:1px solid #1e293b;
+}
+
+body.dark .hit{
+  color:#4ade80;
+}
+
+body.dark .miss{
+  color:#f87171;
+}
+
+/* ALGORITHM STEPS */
+
+body.dark .step{
+  color:#cbd5f5;
+}
+
+body.dark .step.active{
+  background:rgba(56,189,248,0.15);
+  border-left:4px solid #38bdf8;
+  box-shadow:inset 0 0 0 1px rgba(56,189,248,0.25);
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>LRU Cache Visualizer</h1>
+<div id="themeBtn" onclick="toggleTheme()">🌙</div>
+
+
+<div class="wrapper">
+
+<!-- LINKED LIST -->
+<div class="list-box">
+<div class="list-title">
+<span>MRU</span>
+<span>LRU</span>
+</div>
+<div id="list" class="list"></div>
+</div>
+
+<!-- CONTROL PANEL -->
+<div class="panel">
+
+<label>Cache Capacity</label>
+<input id="capacity" type="number" value="3">
+
+<label>Operation</label>
+<select id="op" onchange="toggleValueInput()">
+<option value="put">Put</option>
+<option value="get">Get</option>
+</select>
+
+<input id="key" placeholder="Key">
+<input id="value" placeholder="Value">
+
+<button onclick="run()">Execute</button>
+
+<h3>Map</h3>
+<div style="margin-bottom:6px;">[ Cache Size: <span id="sizeLabel">0</span> ]</div>
+
+<table>
+<thead>
+<tr>
+<th>&lt;Key, Value&gt;</th>
+<th>Node Address</th>
+</tr>
+</thead>
+<tbody id="mapTable"></tbody>
+</table>
+
+
+<div id="log" class="log"></div>
+
+</div>
+
+<!-- ALGORITHM PANEL -->
+<div class="algorithm">
+<h3>Algorithm</h3>
+
+<b>PUT(key,value)</b>
+<div id="putSteps">
+<div class="step">1. If key exists → update value</div>
+<div class="step">2. Move node to front (MRU)</div>
+<div class="step">3. Else if cache full → evict LRU</div>
+<div class="step">4. Insert new node at front</div>
+</div>
+
+<br>
+
+<b>GET(key)</b>
+<div id="getSteps">
+<div class="step">1. If key not present → miss</div>
+<div class="step">2. Else move node to front</div>
+<div class="step">3. Return value</div>
+</div>
+
+</div>
+
+</div>
+
+<script>
+let capacity=3;
+let cache=new Map();
+let order=[];   // MRU → LRU
+
+function log(msg,cls=""){
+  let l=document.getElementById("log");
+  l.innerHTML+=`<div class="${cls}">${msg}</div>`;
+  l.scrollTop=l.scrollHeight;
+}
+
+function clearSteps(){
+  document.querySelectorAll(".step")
+  .forEach(s=>s.classList.remove("active"));
+}
+
+function activateStep(id,index){
+  clearSteps();
+  document.querySelectorAll(`#${id} .step`)[index]
+  .classList.add("active");
+}
+
+function run(){
+  capacity=Number(document.getElementById("capacity").value);
+  let op=document.getElementById("op").value;
+  let k=document.getElementById("key").value;
+  let v=document.getElementById("value").value;
+
+  if(op==="put") put(k,v);
+  else get(k);
+}
+
+function toggleValueInput(){
+  let op = document.getElementById("op").value;
+  let valInput = document.getElementById("value");
+
+  if(op === "get"){
+    valInput.style.display = "none";
+  }else{
+    valInput.style.display = "block";
+  }
+}
+
+function put(k,v){
+  if(!k||!v){alert("Enter key & value");return;}
+
+  activateStep("putSteps",0);
+
+  if(cache.has(k)){
+    cache.set(k,v);
+    activateStep("putSteps",1);
+    moveToFront(k);
+    log("Updated "+k,"hit");
+  }
+  else{
+    activateStep("putSteps",2);
+
+    if(order.length===capacity){
+      let lru=order.pop();
+      cache.delete(lru);
+      log("Evicted "+lru,"miss");
+    }
+
+    activateStep("putSteps",3);
+    cache.set(k,v);
+    order.unshift(k);
+    log("Inserted "+k,"hit");
+  }
+  render();
+}
+
+function get(k){
+  activateStep("getSteps",0);
+
+  if(!cache.has(k)){
+    log("Cache Miss: "+k,"miss");
+    return;
+  }
+
+  activateStep("getSteps",1);
+  moveToFront(k);
+
+  activateStep("getSteps",2);
+  log("Cache Hit: "+k+" → "+cache.get(k),"hit");
+  render();
+}
+
+function moveToFront(k){
+  order=order.filter(x=>x!==k);
+  order.unshift(k);
+}
+
+function render(){
+  renderList();
+  renderMap();
+}
+
+function renderList(){
+  let list=document.getElementById("list");
+  list.innerHTML="";
+
+  order.forEach((k,i)=>{
+    let node=document.createElement("div");
+    node.className="node";
+    node.dataset.key=k;
+
+    if(i===0) node.classList.add("mru");
+    if(i===order.length-1) node.classList.add("lru");
+
+    node.innerHTML=`<b>${k}</b><div>${cache.get(k)}</div>`;
+    list.appendChild(node);
+
+    if(i<order.length-1){
+      let arrow=document.createElement("div");
+      arrow.className="arrow";
+      arrow.innerHTML="→";
+      list.appendChild(arrow);
+    }
+  });
+
+  enableDrag();
+}
+
+
+let dark=false;
+
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+
+  let btn=document.getElementById("themeBtn");
+
+  if(document.body.classList.contains("dark")){
+      btn.innerHTML="☀";
+  }else{
+      btn.innerHTML="🌙";
+  }
+}
+
+
+/* ---------- DRAG & DROP ---------- */
+
+function enableDrag(){
+  document.querySelectorAll(".node").forEach(n=>{
+    n.setAttribute("draggable","true");
+
+    n.addEventListener("dragstart",()=>{
+      n.classList.add("dragging");
+    });
+
+    n.addEventListener("dragend",()=>{
+      n.classList.remove("dragging");
+      updateOrderFromUI();
+    });
+  });
+}
+
+function updateOrderFromUI(){
+  let nodes=[...document.querySelectorAll(".node")];
+  order = nodes.map(n=>n.dataset.key);
+  render();
+}
+
+function generateAddress(i){
+   return "x" + (10000 + i);
+}
+
+function renderMap(){
+  let body=document.getElementById("mapTable");
+  body.innerHTML="";
+  document.getElementById("sizeLabel").innerText = cache.size;
+
+  let i=1;
+  cache.forEach((v,k)=>{
+    body.innerHTML += `
+      <tr>
+        <td>&lt;${k}, ${v}&gt;</td>
+        <td>${generateAddress(i++)}</td>
+      </tr>
+    `;
+  });
+}
+
+render();
+toggleValueInput();
+
+</script>
+
+</body>
+</html>
